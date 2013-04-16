@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# convert each slice to analyze
+medcon -c "anlz" -fv -f *.IMA 
+
+# merge all slices into one vol
+fslmerge -z fullvol *.hdr
+
+rm -f *hdr *img
