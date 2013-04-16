@@ -1,0 +1,41 @@
+#! /bin/bash
+# run from dir with iMRDC.0000n dicoms 
+# so data need to have been reordered with dcm.sortrawdata
+# split data into swi
+
+num_images=`ls *iMRDC_* | wc | awk '{print $1}'`
+num_slices=`expr $num_images / 3`  # each slice has Re and Imag dcm file
+
+mkdir real
+mkdir imag
+mkdir mag
+
+ii=0
+while [ $ii -lt $num_slices ]; do
+
+    mag_map_no=`echo $ii*3+1 | bc`
+    real_map_no=`echo $ii*3+2 | bc`
+    imag_map_no=`echo $ii*3+3 | bc`
+
+    fbase=iMRDC_000000
+    fnum=`printf %03d $real_map_no`
+    fname=$fbase$fnum
+#    echo real  ${fname}
+#    ls -l ${fname}
+    mv ${fname} real/${fname}
+
+    fnum=`printf %03d $imag_map_no`
+    fname=$fbase$fnum
+#    ls -l ${fname}
+#    echo imag  ${fname}
+    mv ${fname} imag/${fname}
+
+    fnum=`printf %03d $mag_map_no`
+    fname=$fbase$fnum
+#    ls -l ${fname}
+#    echo mag  ${fname}
+    mv ${fname} mag/${fname}
+
+    let ii=ii+1
+done
+

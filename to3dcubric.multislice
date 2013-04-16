@@ -1,0 +1,44 @@
+#!/bin/bash
+
+if [ "$#" -lt 1 ]; then
+	echo usage: to3dcubric.fmri OutputFile
+	echo calculates number of slices, volumes from dicom header
+	echo run from directory with GE dicoms... 
+	echo OutputFile will be written to current directory
+	exit
+fi
+
+outputfile=$1
+nimg=`ls | grep -i MRDC | wc | awk '{print $1}'`
+onedcm=`ls -1 | head -n 1`
+
+#nslices=`medcon -f $onedcm | grep 0021,104F | awk '{print $4}'`
+#TR=`medcon -f $onedcm | grep -i 0018,0080 | awk '{print $4}' | sed -e 's/\\[//' | sed -e 's/\\]//' `
+# afni versions...
+nslices=`dicom_hdr $onedcm | grep -i 0021\ 104F | awk '{print $8}'`
+TR=`dicom_hdr $onedcm | grep -i 0018\ 0080 | awk -F// '{print $3}'`
+
+if [ -z $nslices ]; then
+   nslices=$nimg
+   echo "Doesn't look like multiple volumes, so assuming one volume of "$nslices" slices."
+fi
+
+nvols=`expr $nimg / $nslices`
+
+echo "From dicom header: "$nslices" slices per volume"
+echo $nimg" images found in directory"
+echo "So, I think there are " ${nvols} " volumes."
+
+# if filename is *.MRDC.* then it's native scanner dicom format -
+#  need to reorder according to slice position (like geprepfunct)
+num_unproc=`find . -name '*.MRDC.*' | wc | awk '{print $1}'`
+if [ ${num_unproc} -ne 0 ] ; then
+   echo Number of sloppily ordered GE dicoms to rearrange=$num_unproc.  This may take some time.
+   dcm.sortrawdata
+   echo Reordering complete.
+fi
+
+to3d -skip_outliers -time:zt ${nslices} ${nvols}  ${TR} seqplus \
+  -prefix ${outputfile}.nii.gz '*iMRDC*'
+
+

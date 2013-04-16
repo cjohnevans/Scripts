@@ -1,0 +1,33 @@
+#!/bin/bash
+
+LINK_DIR=/cubric/mri/direct_transfer/dicom.by.exam/2011
+TARBALL_DIR=/cubric/mri/direct_transfer/2011
+
+for tarball in `ls $TARBALL_DIR/2011*.tgz`
+	do
+
+	fullpath=$PWD
+	cd /tmp
+	#tar tzf $tarball | grep 'MRDC.1$' >> firstdcminseries
+	firstdcm=`tar tzf $tarball | grep 'MRDC.1$' | head -n 1`
+	#tartime=`echo $tarball | awk -F/20 '{print $2}'`
+	tartime=${tarball:33:19}
+	tartime=`echo $tartime |  awk -F- '{print $1$2$3"."$4$5}'`
+
+	tar xzf $tarball $firstdcm 
+	# use AFNI's dicom_hdr
+	dicom_hdr $firstdcm > dicomtmp.hdr
+	examno=`cat dicomtmp.hdr | grep -i 'study id' | awk -F// '{print $3}' | sed 's/ //g'`
+	#protocol=`cat dicomtmp.hdr | grep -i 'protocol' | awk -F// '{print $3}'| sed 's/ /-/g'`
+	#protocol_short=${protocol:0:10}
+	subjectid=`cat dicomtmp.hdr | grep -i 'patient id' | awk -F// '{print $3}' | sed 's/ //g'`
+	scantime=`cat dicomtmp.hdr  | grep -i 'study time' | awk -F// '{print $3}'`
+	scantime=${scantime:0:4}
+	scandate=`cat dicomtmp.hdr  | grep -i 'study date' | awk -F// '{print $3}'`
+	
+	cd $fullpath
+	    echo "ln -s $tarball $LINK_DIR/$examno.$subjectid.$scandate.$scantime.$tartime" >>  ~/createdcmlink.txt
+	    echo "ln -s $tarball $LINK_DIR/$examno.$subjectid.$scandate.$scantime.$tartime"
+
+
+done

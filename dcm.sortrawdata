@@ -1,0 +1,17 @@
+#!/bin/bash
+# reorder images according to (correct) image number
+#foreach series (`ls -d *`)
+# echo Working on $series
+# cd $dir/$series
+
+ count=`ls | wc -l`
+ 
+ for file in *.MRDC.*
+ do
+  # echo $file
+   filenumber=`echo $file | awk -F. '{print $3}'`
+  # echo $filenumber
+   newfilename=`printf 'iMRDC_%09d\n' $filenumber`
+  mv -f ${file} ${newfilename} 
+ done
+

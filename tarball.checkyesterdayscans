@@ -1,0 +1,17 @@
+#/bin/bash
+# check the tarballs from yesterday
+
+dateyr=`date -d '1 day ago'  "+%Y"`
+dateyrmo=`date -d '1 day ago'  "+%Y-%m-"`
+
+yesterday=`date -d '1 day ago' "+%d"`
+
+#today=`date "+%d"`
+#yesterday=$((today-1))
+
+fullpath=`echo /cubric/mri/direct_transfer/${dateyr}/${dateyrmo}${yesterday}*`
+
+find ${fullpath} -exec /home/sapje1/Code/Scripts/tarball.scaninfoshort {} \;
+
+
+

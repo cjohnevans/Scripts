@@ -1,0 +1,60 @@
+#!/bin/csh
+
+if ( ${#argv} != 3 ) then
+	echo usage: geprepfunct NumAnat NumTime OutputRoot
+	echo e.g. geprepfunct 46 100 mydata
+
+	exit
+endif
+
+echo new version - contact krish if any problems...
+
+set tempimage=`mktemp -p /tmp newsortimageXXXXXXXXXX`
+set temptarget=`mktemp -p /tmp newsorttargetXXXXXXXXXX`
+rm -f ${temptarget}
+rm -f ${tempimage}
+
+
+@ n=1
+foreach file (iMRDC_*)
+	@ doprint = (${n} % 500)
+	if (${doprint} == 0) then
+		echo processing slice number $n
+	endif	
+
+	medcon -c "anlz" -fv -f -noprefix ${file} -o ${tempimage}.img
+	cat ${tempimage}.img >> ${temptarget}.img
+	mv -f ${tempimage}.hdr ${temptarget}.hdr
+	rm -f ${tempimage}.img
+	@ n++
+end	
+	multihdr ${temptarget}.hdr $1 $2
+
+	#New NIFTI code
+	echo converting analyze volume to nifti...
+	fslchfiletype NIFTI_GZ ${temptarget}.hdr ${3}
+
+	rm -f ${temptarget}.img
+	rm -f ${temptarget}.hdr
+
+#new compression code
+echo creating archive directory...
+if (-e dcmfiles) then
+else
+	mkdir dcmfiles
+endif
+
+@ n=1
+foreach file (iMRDC_*)
+	 @ doprint = (${n} % 500)
+	if (${doprint} == 0) then
+		echo moving slice number $n 
+	endif	
+	mv -f $file dcmfiles/
+	@ n++
+end
+
+echo packaging DICOM files into gzipped tar archive...
+	tar zcf dicom.tar.gz dcmfiles
+
+rm -rf dcmfiles

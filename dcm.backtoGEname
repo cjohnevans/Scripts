@@ -1,0 +1,14 @@
+#!/bin/bash
+
+
+for fname in '*iMRDC_*'; do
+   echo ${fname}
+   filenumber=`echo ${fname} | awk -F_0000 '{print $2}'`
+   echo ${filenumber}
+   filenumber=`echo ${filenumber} | sed -e 's/^0//'`
+   echo ${filenumber}
+
+#   newfilename=`printf 'iMRDC_%09d\n' ${filenumber}`
+#   mv -f ${file} ${newfilename}  
+#   echo ${fname} ${newfilename}  
+ done

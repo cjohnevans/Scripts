@@ -1,0 +1,13 @@
+#/bin/bash
+# check the tarballs from yesterday
+# give the required path to the files to match, (no *)
+
+
+fullpath=`echo $1*`
+
+echo $fullpath
+
+find ${fullpath} -exec /home/sapje1/scp/tarball.scaninfoshort {} \;
+
+
+

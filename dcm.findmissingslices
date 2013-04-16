@@ -1,0 +1,33 @@
+#!/bin/bash
+
+echo "Looking through dicoms..."
+
+mkdir findmissing
+
+for file in *.MRDC.* 
+do 
+   imageno=`echo $file | awk -F. '{printf("%05d", $3)}'`
+   #  echo $file $imageno
+   touch findmissing/${imageno}
+done
+
+cd findmissing
+
+expectedfile=1
+
+for file in *
+do
+   currentfile=`echo $file | awk '{printf("%d", $file)}'`
+   # echo $expectedfile " " $currentfile 
+   if [ "$expectedfile" -ne "$currentfile" ]
+   then 
+      echo $expectedfile " missing!"
+      let expectedfile=currentfile+1
+   else 
+      let expectedfile=expectedfile+1
+   fi
+done
+
+cd ..
+
+rm -rf findmissing

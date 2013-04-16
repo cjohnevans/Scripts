@@ -1,0 +1,19 @@
+#!/bin/bash
+
+
+nimg=`ls | wc | awk '{print $1}'`
+onedcm=`ls -1 | head -n 1`
+
+nslices=`medcon -f $onedcm | grep 0021,104F | awk '{print $4}'`
+
+if [ -z $nslices ]; then
+   nslices=$nimg
+   echo "Doesn't look like multiple volumes, so assuming one volume of "$nslices" slices."
+fi
+
+nvols=`expr $nimg / $nslices`
+
+echo "From dicom header: "$nslices" slices per volume, "$nvols" volumes"
+echo $nimg" images found in directory"
+
+geprepfunct

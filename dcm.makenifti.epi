@@ -1,0 +1,43 @@
+#! /bin/bash 
+# dcm.makenifti.epi <InputDirectory> <nSlices> <nVolumes> <TR> <OutputFile>
+# e.g. dcm.makenifti.struct Series_00012/ 45 100 3000 someepi
+# AFNI processing to generate nifti file for structural
+# run from the directory with the (raw) dicoms, can deal with data
+# already sorted with dcm.sortrawdat, though.
+
+numargs=$#
+
+if [ ${numargs} -lt 5 ] ; then 
+   echo
+   echo  ' dcm.makenifti.epi <InputDirectory> <nSlices> <nVolumes> <TR> <OutputFile>'
+   echo  '   e.g. dcm.makenifti.struct Series_00012/ 45 100 3000 someepi'
+   echo  '   AFNI processing to generate nifti file for structural'
+   echo  '   Can deal with data already sorted with dcm.sortrawdat too'
+   echo
+   exit -1
+fi
+
+# get rid of trailing /
+inputdir=`echo $1 | sed -e 's/\\/$//g'` 
+nSlices=$2
+nVols=$3
+TR=$4
+outputfile=$5 
+origdir=${PWD}
+
+# if filename is *.MRDC.* then it's native scanner dicom format -
+#  need to reorder according to slice position (like geprepfunct)
+num_unproc=`find ${inputdir} -name *.MRDC.* | wc | awk '{print $1}'`
+#echo $num_unproc
+if [ ${num_unproc} -ne 0 ] ; then
+   cd ${inputdir}
+   dcm.sortrawdata
+   cd ${origdir}
+fi
+
+to3d -skip_outliers -time:zt ${nSlices} ${nVols} ${TR} alt+z \
+  -prefix ${outputfile}.nii.gz "${inputdir}/iMRDC*"
+
+# change to LPI for fsl
+#3dresample -orient LPI -prefix ${outputfile}.nii.gz -inset temp_orient.nii.gz
+#rm temp_orient.nii.gz

@@ -1,0 +1,43 @@
+#!/bin/bash
+source /etc/profile.d/cubric.sh
+
+if [ -z "$1" ]; then
+    echo "Usage: scanseriesinfo <input tarball>"
+    echo "Displays scan information (from DICOM headers)"
+    exit 0
+fi
+
+#tarballfname=`echo $1 | sed 's/\/cubric\/mri\/direct_transfer\///g'| awk -F/ '{print $2}'`
+#tarballfname=`echo $1 | sed 's/\/cubric\/mri\/direct_transfer\///g'`
+#echo $tarballfname
+
+if [ -f "$1" ]; then
+		
+	tarsize=`ls -l $1  | awk '{print $5}' `
+	if [ "$tarsize" -gt 0 ]
+	then
+   		dcmfile=`tar -tf $1 | grep -e MRDC.1$ | head -n 1`
+
+		# send output, including errors, to file
+		tar -zxf $1 -C /tmp $dcmfile &> /tmp/scaninfoerr.txt
+		errsize=`ls -l /tmp/scaninfoerr.txt  | awk '{print $5}' `
+		if [ "$errsize" -gt 0 ] 
+		then
+			# non-zero error log.  		
+			echo $1 "!!!!! ERROR: Tarball corrupt !!!!!"
+		else
+			# err log empty - tarball OK		
+			/gpfs/software/bin/medcon -f /tmp/${dcmfile} > /tmp/dcmhdr.txt
+			studyid=`grep "Study ID" /tmp/dcmhdr.txt | awk '{print $4}'`
+			patid=`grep "Patient ID" /tmp/dcmhdr.txt| awk -F: '{print $2}'`
+			studydesc=`grep "Study Description" /tmp/dcmhdr.txt | awk -F : '{print $2}'`
+			echo $1, ${studyid}, ${patid},${studydesc}
+		fi
+	else
+		echo $1 "!!!!! ERROR: Empty Tarball !!!!!"
+	fi
+else
+    	echo "File " $1 " does not exist"
+    	exit 0
+fi
+exit 0

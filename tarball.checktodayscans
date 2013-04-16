@@ -1,0 +1,11 @@
+#/bin/bash
+
+dateyr=`date "+%Y"`
+datestr=`date "+%Y-%m-%d"`
+
+fullpath=`echo /cubric/mri/direct_transfer/${dateyr}/${datestr}*`
+
+find ${fullpath} -exec /home/sapje1/Code/Scripts/tarball.scaninfoshort {} \;
+
+
+

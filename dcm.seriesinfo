@@ -1,0 +1,11 @@
+#!/bin/bash
+
+series=$1
+
+dicom_hdr $1/*.MRDC.1 > /tmp/hdr.tmp
+
+cat /tmp/hdr.tmp | grep -i 'study ID' | awk '{print $8 $9}'
+cat /tmp/hdr.tmp | grep -i 'patient ID' | awk '{print $8 $9}' 
+cat /tmp/hdr.tmp | grep -i 'series desc' | awk '{print $8 $9}' 
+cat /tmp/hdr.tmp | grep -i '0019 109c' | awk '{print "PSD "$7}' 
+cat /tmp/hdr.tmp | grep -i '0020 1002' | awk -F// '{print "No. Slices " $3}' 

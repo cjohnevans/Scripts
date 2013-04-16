@@ -1,0 +1,74 @@
+#! /bin/bash
+# dcm.makenifti.struct <InputDirectory> <OutputFile>
+# e.g. dcm.makenifti.struct Series_00012/ struct
+# AFNI processing to generate nifti file for structural
+# run from the directory with the (raw) dicoms, can deal with data
+# already sorted with dcm.sortrawdat, though.
+# CJE Jan 2011:  When processing - store first and last
+#  dicoms for MRS voxel registration 
+
+
+numargs=$#
+ConvertFSL=1
+
+if [ ${numargs} -lt 2 ] ; then 
+   echo
+   echo  ' dcm.makenifti.struct InputDirectory OutputFile [ConvertFSL]'
+   echo  '   e.g. dcm.makenifti.struct Series_00012 struct 1'
+   echo  '   AFNI processing to generate nifti file for structural'
+   echo  '   Can deal with data already sorted with dcm.sortrawdat too'
+   echo  '   [ConvertFSL] 0=NO, 1=YES (default) '
+   echo  '     Convert image to LPI to read into FSL (n.b. after doing this'
+   echo  '     deobliquing with 3dWarp will no longer work'  
+   echo
+   exit -1
+fi
+
+# get rid of trailing /
+inputdir=`echo $1 | sed -e 's/\\/$//g'` 
+outputfile=$2 
+origdir=${PWD}
+
+if [ ${numargs} -ge 3 ] ; then 
+   ConvertFSL=$3
+fi
+
+
+
+# if filename is *.MRDC.* then it's native scanner dicom format -
+#  need to reorder according to slice position (like geprepfunct)
+num_unproc=`find ${inputdir} -name '*.MRDC.*' | wc | awk '{print $1}'`
+echo $num_unproc
+if [ ${num_unproc} -ne 0 ] ; then
+   cd ${inputdir}
+   dcm.sortrawdata
+   cd ${origdir}
+fi
+
+
+# CJE Jan 2011
+firstdicom=`ls -1 ${inputdir}/iMR* | head -n 1`
+lastdicom=`ls -1 ${inputdir}/iMR* | tail -n 1`
+mkdir ${inputdir}_DCMinfoMRS
+cp ${firstdicom} ${inputdir}_DCMinfoMRS
+cp ${lastdicom} ${inputdir}_DCMinfoMRS
+
+
+to3d -skip_outliers -prefix temp_orient.nii.gz ${inputdir}/iMRDC*
+#to3d -skip_outliers -prefix ${outputfile}.nii.gz ${inputdir}/iMRDC*
+
+
+# change to LPI for fsl, if required
+if [ ${ConvertFSL} -eq 1 ]; then
+{
+   3dresample -orient LPI -prefix ${outputfile}.nii.gz \
+      -inset temp_orient.nii.gz
+   rm temp_orient.nii.gz
+}
+else
+{
+    mv temp_orient.nii.gz ${outputfile}.nii.gz
+}
+fi
+
+exit 0

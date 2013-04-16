@@ -1,0 +1,51 @@
+#!/bin/bash
+source /etc/profile.d/cubric.sh
+
+# March 2013, updated to use afni
+
+if [ -z "$1" ]; then
+    echo "Usage: scanseriesinfo <input tarball>"
+    echo "Displays scan information (from DICOM headers)"
+    exit 0
+fi
+
+dicomfname=`echo $1 | sed s_./__`
+
+if [ -f "$1" ]; then
+   	echo "------------------------------------------------------------------"
+   	# count the number of series
+	ii=0
+   	for dcmfile in `tar -tf $1 | grep -e MRDC.1$`; do 
+		tar -zxf $1 -C /tmp $dcmfile
+		dicom_hdr /tmp/${dcmfile} > /tmp/dcmhdr.txt
+		if [ $ii -eq 0 ]; then
+        		echo "DICOM Data Tarball           : "$dicomfname
+			grep "Study ID" /tmp/dcmhdr.txt  | awk -F// '{print $2 "//" $3}'
+			grep "Patient Name" /tmp/dcmhdr.txt | awk -F// '{print $2 "//" $3}'
+  			grep "Acquisition Date" /tmp/dcmhdr.txt   | awk -F// '{print $2 "//" $3}'
+  			grep "Acquisition Time" /tmp/dcmhdr.txt  | awk -F// '{print $2 "//" $3}'
+   			grep "Study Description" /tmp/dcmhdr.txt | awk -F// '{print $2 "//" $3}'
+   			grep "Protocol " /tmp/dcmhdr.txt | awk -F// '{print $2 "//" $3}'
+		fi
+	#grep -i "series number"  /tmp/dcmhdr.txt 
+	#grep -i "0008\ 103E" /tmp/dcmhdr.txt 
+	#grep "0019\ 109C" /tmp/dcmhdr.txt 
+	#grep -i "0019\ 10F9" /tmp/dcmhdr.txt 
+	#grep -i "0019\ 108A" /tmp/dcmhdr.txt
+	#grep -i "0019\ 108B" /tmp/dcmhdr.txt
+	
+		numseries=`grep -i "series number"  /tmp/dcmhdr.txt | awk -F// '{print $3}'`
+		seriesdesc=`grep -i "0008\ 103E" /tmp/dcmhdr.txt | awk -F// '{print $3}'`
+		psd=`grep "0019\ 109C" /tmp/dcmhdr.txt | awk -F// '{print $3}'`
+		tx=`grep -i "0019\ 10F9" /tmp/dcmhdr.txt  | awk -F// '{print $3}'` 
+		rg1=`grep -i "0019\ 108A" /tmp/dcmhdr.txt  | awk -F// '{print $3}'`
+		rg2=`grep -i "0019\ 108B" /tmp/dcmhdr.txt  | awk -F // '{print $3}'`
+		echo $numseries":" $seriesdesc   $psd "TG/RG1/RG2:" $tx $rg1 $rg2
+		ii=`expr $ii + 1`
+	done
+	#rm /tmp/dcmhdr.txt
+else
+    	echo "File " $1 " does not exist"
+    	exit 0
+fi
+exit 0
